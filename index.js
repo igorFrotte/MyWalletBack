@@ -22,6 +22,23 @@ mongoClient.connect().then(() => {
   name: joi.string().required()
 }); */
 
+setInterval( async () => {
+  const realTime = Date.now();
+  const HOURS_2 = 1000 * 60 * 60 * 2;
 
+  try {
+    const tokens = await db.collection("token").find().toArray()
+
+    tokens.map( async (e) => {
+      if(realTime - e.creatTime > HOURS_2){
+        await db
+          .collection("participante")
+          .deleteOne({_id: ObjectId(e._id)});
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}, 60000);
 
 app.listen(5000);

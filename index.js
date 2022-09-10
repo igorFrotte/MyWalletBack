@@ -5,6 +5,7 @@ import joi from 'joi';
 import dayjs from 'dayjs';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
+import { v4 as uuid } from 'uuid';
 
 dotenv.config();
 const app = express();
@@ -25,6 +26,11 @@ const signUpSchema = joi.object({
   password: joi.string().required()
 }); 
 
+const signInSchema = joi.object({
+  email: joi.string().email().required(),
+  password: joi.string().required()
+}); 
+
 setInterval( async () => {
   const realTime = Date.now();
   const HOURS_2 = 1000 * 60 * 60 * 2;
@@ -35,7 +41,7 @@ setInterval( async () => {
     console.log("Interval Executada");
 
     tokens.map( async (e) => {
-      if(realTime - e.creatTime > HOURS_2){
+      if(realTime - e.creatTime > HOURS_2){ 
         await db
           .collection("token")
           .deleteOne({_id: ObjectId(e._id)});
@@ -76,6 +82,38 @@ app.post("/sign-up", async (req, res) => {
   }
 });
 
+app.post("/sign-in", async (req, res) => {
+  const { email, password } = req.body;
 
+  const validation = signInSchema.validate(req.body, { abortEarly: false });
+
+  if (validation.error) {
+    const erros = validation.error.details.map((detail) => detail.message);
+    return res.status(422).send(erros);
+  }
+
+  try {
+    const user = await db.collection('user').findOne({email});
+    if(!user) {
+      return res.status(404).send('Usuário ou senha não encontrada');
+    }
+
+    const isValid = bcrypt.compareSync(password, user.password);
+    if(!isValid) {
+      return res.status(404).send('Usuário ou senha não encontrada');
+    }
+
+    const token = uuid();
+    db.collection('token').insertOne({
+      token,
+      userId: user._id,
+      creatTime: Date.now()
+    })
+
+    return res.status(200).send(token);
+  } catch (error) {
+    return res.status(500).send(error.message);
+  }
+});
 
 app.listen(5000);

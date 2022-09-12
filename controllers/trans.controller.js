@@ -45,4 +45,6 @@ const list = async (req, res) => {
     }
 };
 
-export { create, list };
+const token = (req, res) => res.status(200).send();
+
+export { create, list, token };

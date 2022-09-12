@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.use(authorizationMiddleware);
 
+router.get("/token", transController.token);
 router.post("/transactions", transController.create);
 router.get("/transactions", transController.list);
 

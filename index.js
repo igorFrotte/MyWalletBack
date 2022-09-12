@@ -18,7 +18,7 @@ setInterval( async () => {
   const HOURS_2 = 1000 * 60 * 60 * 2;
 
   try {
-    const tokens = await db.collection("token").find().toArray()
+    const tokens = await db.collection("token").find().toArray();
 
     console.log("Interval Executada");
 

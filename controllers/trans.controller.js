@@ -10,9 +10,7 @@ const transactionSchema = joi.object({
 
 let db = await mongo();
 
-const create = async (req, res) => {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-  
+const create = async (req, res) => {  
     const validation = transactionSchema.validate(req.body, { abortEarly: false });
     if (validation.error) {
       const erros = validation.error.details.map((detail) => detail.message);
@@ -22,17 +20,12 @@ const create = async (req, res) => {
     const value = Number(req.body.value).toFixed(2);
   
     try {
-      const session = await db.collection('token').findOne({ token });
-      if (!session) {
-        return res.send(401);
-      }
-  
       const transactions = await db
         .collection('transaction')
         .insertOne({ 
           ...req.body,
           value,
-          userId: session.userId,
+          userId: res.locals.session.userId,
           date: dayjs(new Date()).format('DD/MM')
         });
   
@@ -42,16 +35,9 @@ const create = async (req, res) => {
     }
 };
 
-const list = async (req, res) => {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-  
+const list = async (req, res) => { 
     try {
-      const session = await db.collection('token').findOne({ token });
-      if (!session) {
-        return res.send(401);
-      }
-  
-      const transactions = await db.collection('transaction').find({ userId: session.userId }).toArray();
+      const transactions = await db.collection('transaction').find({ userId: res.locals.session.userId }).toArray();
   
       return res.status(200).send(transactions);
     } catch (error) {
